@@ -2,19 +2,19 @@
   "name": "Verbos frecuentes — Chino",
   "short_name": "Verbos",
   "description": "Flashcards de verbos frecuentes en chino",
-  "start_url": "./verbos.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f5f0e8",
   "theme_color": "#f5f0e8",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "icon-verbos-192.png",
+      "src": "icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "icon-verbos-512.png",
+      "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
