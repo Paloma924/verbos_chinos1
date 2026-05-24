@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verbos frecuentes</title>
+    <link rel="manifest" href="manifest-verbos.json">
+    <meta name="theme-color" content="#f5f0e8">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Verbos">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #f5f0e8;
+            --card-bg: #fffdf7;
+            --ink: #1a1410;
+            --muted: #7a6f63;
+            --accent: #2c6e8a;
+            --accent2: #3a6b4a;
+            --border: #d9d0c0;
+            --shadow: rgba(80,50,20,0.12);
+        }
+
+        body {
+            background: var(--bg);
+            font-family: sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background-image:
+                radial-gradient(circle at 20% 20%, rgba(44,110,138,0.06) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(58,107,74,0.06) 0%, transparent 50%);
+        }
+
+        h1 {
+            font-size: clamp(1.4rem, 4vw, 2rem);
+            font-weight: 300;
+            color: var(--ink);
+            margin-bottom: 6px;
+            text-align: center;
+        }
+
+        .subtitle {
+            font-size: 0.8rem;
+            color: var(--muted);
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        #counter {
+            font-size: 0.78rem;
+            color: var(--muted);
+            margin-bottom: 14px;
+            text-align: center;
+        }
+
+        #cardContainer {
+            width: min(420px, 92vw);
+            height: 280px;
+            perspective: 1200px;
+            cursor: pointer;
+            margin-bottom: 22px;
+        }
+
+        #card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        #card.flipped { transform: rotateY(180deg); }
+
+        .card-face {
+            position: absolute;
+            inset: 0;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 28px;
+            box-shadow: 0 4px 20px var(--shadow);
+        }
+
+        .card-front .word-es {
+            font-size: clamp(1.4rem, 5vw, 2rem);
+            font-weight: 300;
+            color: var(--ink);
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .card-back {
+            transform: rotateY(180deg);
+            gap: 12px;
+            background: linear-gradient(145deg, #fffdf7 0%, #f0f7ff 100%);
+        }
+
+        .card-back .word-pinyin {
+            font-style: italic;
+            font-size: clamp(1.4rem, 5vw, 2rem);
+            font-weight: 300;
+            color: var(--accent);
+            text-align: center;
+        }
+
+        .card-back .divider {
+            width: 40px;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .card-back .word-hanzi {
+            font-size: clamp(2.6rem, 10vw, 4rem);
+            font-weight: 300;
+            color: var(--ink);
+            text-align: center;
+            line-height: 1;
+        }
+
+        .nav-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .nav-btn {
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            width: 42px;
+            height: 42px;
+            font-size: 1rem;
+            color: var(--ink);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+        .nav-hint {
+            font-size: 0.72rem;
+            color: var(--muted);
+        }
+
+        .action-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 11px 20px;
+            border-radius: 40px;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--ink);
+            cursor: pointer;
+            transition: all 0.15s;
+            box-shadow: 0 1px 4px var(--shadow);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .action-btn:active { transform: scale(0.96); box-shadow: none; }
+
+        #listenBtn:hover  { border-color: var(--accent2); color: var(--accent2); }
+        #micBtn:hover     { border-color: var(--accent);  color: var(--accent);  }
+        #shuffleBtn:hover { border-color: #5b4fcf; color: #5b4fcf; }
+
+        #micBtn.listening {
+            border-color: var(--accent);
+            background: rgba(44,110,138,0.08);
+            color: var(--accent);
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(44,110,138,0.35); }
+            50%       { box-shadow: 0 0 0 7px rgba(44,110,138,0); }
+        }
+
+        #micResult {
+            display: none;
+            margin-top: 14px;
+            padding: 10px 22px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-align: center;
+            max-width: min(420px, 92vw);
+        }
+
+        #micResult.listening  { background: #eef3ff; color: #3a4a9f; border: 1.5px solid #7289da; }
+        #micResult.perfect    { background: #d4edda; color: #1a6b2f; border: 1.5px solid #28a745; }
+        #micResult.good       { background: #fff3cd; color: #7d5a00; border: 1.5px solid #f0a500; }
+        #micResult.incorrect  { background: #fdecea; color: #8b1a1a; border: 1.5px solid #e74c3c; }
+    </style>
+</head>
+<body>
+
+    <h1>Verbos frecuentes</h1>
+    <p class="subtitle">Vocabulario · Chino</p>
+    <div id="counter"></div>
+
+    <div id="cardContainer">
+        <div id="card">
+            <div class="card-face card-front">
+                <div class="word-es" id="displayMeaning"></div>
+            </div>
+            <div class="card-face card-back">
+                <div class="word-pinyin" id="displayPinyin"></div>
+                <div class="divider"></div>
+                <div class="word-hanzi" id="displayHanzi"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="nav-row">
+        <button class="nav-btn" id="prevBtn">←</button>
+        <span class="nav-hint">Anterior / Siguiente</span>
+        <button class="nav-btn" id="nextBtn">→</button>
+    </div>
+
+    <div class="action-row">
+        <button class="action-btn" id="listenBtn">🔊 Escuchar</button>
+        <button class="action-btn" id="micBtn">🎙️ Hablar</button>
+        <button class="action-btn" id="shuffleBtn">🔀 Barajar</button>
+    </div>
+
+    <div id="micResult"></div>
+
+    <script>
+        var vocabulary = [
+            // — Verbos frecuentes 1 (foto 1) —
+            { h: "是",    p: "Shì",       m: "Ser" },
+            { h: "在",    p: "Zài",       m: "Estar en" },
+            { h: "去",    p: "Qù",        m: "Ir a" },
+            { h: "来",    p: "Lái",       m: "Venir a" },
+            { h: "回",    p: "Huí",       m: "Regresar a" },
+            { h: "没有",  p: "Méi yǒu",   m: "No tener / no haber" },
+            { h: "吃",    p: "Chī",       m: "Comer" },
+            { h: "喝",    p: "Hē",        m: "Beber" },
+            { h: "看",    p: "Kàn",       m: "Ver, mirar" },
+            { h: "听",    p: "Tīng",      m: "Escuchar" },
+            { h: "说",    p: "Shuō",      m: "Hablar" },
+            { h: "叫",    p: "Jiào",      m: "Llamarse, gritar" },
+            { h: "要",    p: "Yào",       m: "Querer" },
+            { h: "喜欢",  p: "Xǐ huān",   m: "Gustar" },
+            { h: "想",    p: "Xiǎng",     m: "Pensar" },
+            { h: "买",    p: "Mǎi",       m: "Comprar" },
+            { h: "卖",    p: "Mài",       m: "Vender" },
+            { h: "工作",  p: "Gōng zuò",  m: "Trabajar" },
+            { h: "懂",    p: "Dǒng",      m: "Entender" },
+            { h: "知道",  p: "Zhī dào",   m: "Saber" },
+            { h: "教",    p: "Jiāo",      m: "Enseñar" },
+            { h: "学习",  p: "Xué xí",    m: "Aprender" },
+            { h: "复习",  p: "Fù xí",     m: "Repasar" },
+            { h: "休息",  p: "Xiū xí",    m: "Descansar" },
+            { h: "住在",  p: "Zhù zài",   m: "Vivir en" },
+            { h: "用",    p: "Yòng",      m: "Usar" },
+            { h: "问",    p: "Wèn",       m: "Preguntar" },
+            { h: "回答",  p: "Huí dá",    m: "Responder" },
+            // — Continuación foto 1.2 —
+            { h: "借",    p: "Jiè",       m: "Prestar" },
+            { h: "还",    p: "Huán",      m: "Devolver" },
+            { h: "偷",    p: "Tōu",       m: "Robar" },
+            { h: "抢",    p: "Qiǎng",     m: "Arrebatar, robar" },
+            { h: "找",    p: "Zhǎo",      m: "Buscar" },
+            { h: "哭",    p: "Kū",        m: "Llorar" },
+            { h: "写字",  p: "Xiě zì",    m: "Escribir" },
+            { h: "给",    p: "Gěi",       m: "Dar" },
+            { h: "送",    p: "Sòng",      m: "Regalar" },
+            { h: "付钱",  p: "Fù qián",   m: "Pagar" },
+            { h: "打扫",  p: "Dǎ sǎo",    m: "Limpiar" },
+            { h: "照顾",  p: "Zhào gù",   m: "Cuidar" },
+            { h: "照相",  p: "Zhào xiàng",m: "Hacer fotos" },
+            { h: "聊天",  p: "Liáo tiān", m: "Charlar" },
+            { h: "庆祝",  p: "Qìng zhù",  m: "Celebrar" },
+            { h: "游泳",  p: "Yóu yǒng",  m: "Nadar" },
+            { h: "爬山",  p: "Pá shān",   m: "Hacer senderismo" },
+            { h: "滑雪",  p: "Huá xuě",   m: "Esquiar" },
+            { h: "放假",  p: "Fàng jià",  m: "Tener vacaciones" },
+            { h: "出去玩",p: "Chū qù wán",m: "Salir a divertirse" },
+            { h: "出门",  p: "Chū mén",   m: "Salir de casa" },
+            { h: "结婚",  p: "Jié hūn",   m: "Casarse" },
+            { h: "离婚",  p: "Lí hūn",    m: "Divorciarse" },
+            { h: "喝醉",  p: "Hē zuì",    m: "Emborracharse" },
+            { h: "考试",  p: "Kǎo shì",   m: "Examinarse" },
+            { h: "下雨",  p: "Xià yǔ",    m: "Llover" },
+            { h: "下雪",  p: "Xià xuě",   m: "Nevar" },
+            { h: "觉得",  p: "Jué de",    m: "Creer, pensar, sentir" },
+            // — Verbos frecuentes 2 (foto 2.1) —
+            { h: "开",      p: "Kāi",         m: "Abrir, encender" },
+            { h: "开关门",  p: "Kāi guān mén", m: "Abrir/cerrar la puerta" },
+            { h: "开关窗户",p: "Kāi guān chuāng hu", m: "Abrir/cerrar la ventana" },
+            { h: "开车",    p: "Kāi chē",     m: "Conducir" },
+            { h: "开始",    p: "Kāi shǐ",     m: "Empezar, comenzar" },
+            { h: "关",      p: "Guān",        m: "Apagar, cerrar" },
+            { h: "换",      p: "Huàn",        m: "Cambiar (algo)" },
+            { h: "换钱",    p: "Huàn qián",   m: "Cambiar dinero" },
+            { h: "换衣服",  p: "Huàn yī fú",  m: "Cambiarse de ropa" },
+            { h: "换车",    p: "Huàn chē",    m: "Hacer transbordo" },
+            { h: "洗脸",    p: "Xǐ liǎn",     m: "Lavarse la cara" },
+            { h: "洗澡",    p: "Xǐ zǎo",      m: "Bañarse" },
+            { h: "洗手",    p: "Xǐ shǒu",     m: "Lavarse las manos" },
+            { h: "洗碗",    p: "Xǐ wǎn",      m: "Lavar los platos" },
+            { h: "洗衣服",  p: "Xǐ yī fú",    m: "Lavar la ropa" },
+            { h: "打电话",  p: "Dǎ diàn huà", m: "Llamar por teléfono" },
+            { h: "上网",    p: "Shàng wǎng",  m: "Navegar por internet" },
+            { h: "记得",    p: "Jì de",       m: "Recordar" },
+            { h: "忘了",    p: "Wàng le",     m: "Olvidar" },
+            { h: "吸烟",    p: "Xī yān",      m: "Fumar" },
+            { h: "骂",      p: "Mà",          m: "Reñir" },
+            { h: "爱",      p: "Ài",          m: "Amar" },
+            { h: "讨厌",    p: "Tǎo yàn",     m: "Disgustar" },
+            // — Continuación foto 2.2 —
+            { h: "等",      p: "Děng",        m: "Esperar" },
+            { h: "笑",      p: "Xiào",        m: "Reír" },
+            { h: "画画",    p: "Huà huār",    m: "Dibujar" },
+            { h: "散步",    p: "Sàn bù",      m: "Pasear" },
+            { h: "跑步",    p: "Pǎo bù",      m: "Correr" },
+            { h: "做运动",  p: "Zuò yùn dòng",m: "Hacer deporte" },
+            { h: "唱歌",    p: "Chàng gē",    m: "Cantar" },
+            { h: "跳舞",    p: "Tiào wǔ",     m: "Bailar" },
+            { h: "做饭",    p: "Zuò fàn",     m: "Cocinar" },
+            { h: "旅行",    p: "Lǚ xíng",     m: "Viajar" },
+            { h: "观光",    p: "Guān guāng",  m: "Hacer turismo" },
+            { h: "玩",      p: "Wán",         m: "Jugar, divertirse" },
+            { h: "念书",    p: "Niàn shū",    m: "Estudiar" },
+            { h: "看书",    p: "Kàn shū",     m: "Leer" },
+            { h: "睡觉",    p: "Shuì jiào",   m: "Dormir" },
+            { h: "起床",    p: "Qǐ chuáng",   m: "Levantarse" },
+            { h: "上课",    p: "Shàng kè",    m: "Asistir a clase" },
+            { h: "下课",    p: "Xià kè",      m: "Acabar la clase" },
+            { h: "生病",    p: "Shēng bìng",  m: "Estar enfermo" },
+            { h: "感冒",    p: "Gǎn māo",     m: "Estar resfriado" },
+            { h: "发烧",    p: "Fā shāo",     m: "Tener fiebre" }
+        ];
+
+        var index = 0;
+        var card = document.getElementById('card');
+        var micBtn = document.getElementById('micBtn');
+        var micResult = document.getElementById('micResult');
+        var isListening = false;
+        var recReady = true;
+
+        var Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
+        var rec = Speech ? new Speech() : null;
+        if (rec) {
+            rec.lang = 'zh-CN';
+            rec.interimResults = false;
+            rec.maxAlternatives = 8;
+            rec.continuous = false;
+        }
+
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(function(s) { s.getTracks().forEach(function(t) { t.stop(); }); })
+                .catch(function() {});
+        }
+
+        function render() {
+            card.classList.remove('flipped');
+            var item = vocabulary[index];
+            document.getElementById('displayHanzi').innerText = item.h;
+            document.getElementById('displayPinyin').innerText = item.p;
+            document.getElementById('displayMeaning').innerText = item.m;
+            document.getElementById('counter').innerText = "Tarjeta " + (index + 1) + " de " + vocabulary.length;
+            hideMicResult();
+        }
+
+        function showMicResult(type, msg) {
+            micResult.className = type;
+            micResult.innerText = msg;
+            micResult.style.display = 'block';
+        }
+
+        function hideMicResult() {
+            micResult.style.display = 'none';
+            micResult.className = '';
+        }
+
+        function setListening(on) {
+            isListening = on;
+            if (on) {
+                micBtn.textContent = '🔴 Escuchando...';
+                micBtn.classList.add('listening');
+                showMicResult('listening', '🎙️ Di la palabra en chino...');
+            } else {
+                micBtn.textContent = '🎙️ Hablar';
+                micBtn.classList.remove('listening');
+                recReady = true;
+            }
+        }
+
+        // Normaliza: quita espacios y caracteres extra
+        function normalize(str) {
+            return str.replace(/\s/g, '').replace(/[（）()]/g, '');
+        }
+
+        // Convierte pinyin con tonos a sin tonos para comparación flexible
+        function stripTones(str) {
+            return str.toLowerCase()
+                .replace(/[āáǎà]/g, 'a').replace(/[ēéěè]/g, 'e')
+                .replace(/[īíǐì]/g, 'i').replace(/[ōóǒò]/g, 'o')
+                .replace(/[ūúǔù]/g, 'u').replace(/[ǖǘǚǜ]/g, 'u')
+                .replace(/\s/g, '');
+        }
+
+        // Coincidencia parcial: cuántos caracteres del expected aparecen en transcript
+        function partialMatch(transcript, expected) {
+            var t = normalize(transcript);
+            var e = normalize(expected);
+            if (e.length === 0) return 0;
+            var hits = 0;
+            for (var i = 0; i < e.length; i++) {
+                if (t.indexOf(e[i]) !== -1) hits++;
+            }
+            return hits / e.length;
+        }
+
+        function shuffleArray(arr) {
+            for (var i = arr.length - 1; i > 0; i--) {
+                var j = Math.floor(Math.random() * (i + 1));
+                var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+            }
+        }
+
+        document.getElementById('cardContainer').addEventListener('click', function() {
+            card.classList.toggle('flipped');
+        });
+
+        document.getElementById('nextBtn').addEventListener('click', function() {
+            index = (index < vocabulary.length - 1) ? index + 1 : 0;
+            render();
+        });
+
+        document.getElementById('prevBtn').addEventListener('click', function() {
+            index = (index > 0) ? index - 1 : vocabulary.length - 1;
+            render();
+        });
+
+        document.getElementById('shuffleBtn').addEventListener('click', function(e) {
+            e.stopPropagation();
+            shuffleArray(vocabulary);
+            index = 0;
+            render();
+            showMicResult('listening', '🔀 ¡Cartas barajadas!');
+            setTimeout(hideMicResult, 1500);
+        });
+
+        document.getElementById('listenBtn').addEventListener('click', function(e) {
+            e.stopPropagation();
+            window.speechSynthesis.cancel();
+            var u = new SpeechSynthesisUtterance(vocabulary[index].h);
+            u.lang = 'zh-CN';
+            window.speechSynthesis.speak(u);
+        });
+
+        micBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (!rec) {
+                showMicResult('incorrect', '❌ Tu navegador no soporta reconocimiento de voz. Usa Chrome.');
+                return;
+            }
+            if (isListening) { rec.stop(); return; }
+            if (!recReady) return;
+            recReady = false;
+            setListening(true);
+
+            try { rec.start(); }
+            catch(err) {
+                setListening(false);
+                showMicResult('incorrect', '❌ Error al iniciar el micrófono. Inténtalo de nuevo.');
+            }
+
+            rec.onresult = function(event) {
+                setListening(false);
+                var item = vocabulary[index];
+                var expectedH = normalize(item.h);
+                var expectedP = stripTones(item.p);
+
+                var bestMatch = null;
+                var bestConfidence = 0;
+                var bestPartial = 0;
+                var topTranscript = event.results[0][0].transcript.trim();
+
+                for (var i = 0; i < event.results[0].length; i++) {
+                    var alt = event.results[0][i];
+                    var transcriptH = normalize(alt.transcript.trim());
+                    var transcriptP = stripTones(alt.transcript.trim());
+
+                    // Mejora 1: comparar también por pinyin
+                    var matchH = (transcriptH === expectedH);
+                    var matchP = (transcriptP === expectedP);
+
+                    if ((matchH || matchP) && alt.confidence > bestConfidence) {
+                        bestMatch = alt;
+                        bestConfidence = alt.confidence;
+                    }
+
+                    // Mejora 2: coincidencia parcial (para palabras de 2+ caracteres)
+                    if (expectedH.length >= 2) {
+                        var partial = partialMatch(alt.transcript, item.h);
+                        if (partial > bestPartial) bestPartial = partial;
+                    }
+                }
+
+                if (bestMatch) {
+                    if (bestConfidence >= 0.85) {
+                        showMicResult('perfect', '🌟 ¡Perfecto! (' + Math.round(bestConfidence * 100) + '%)');
+                    } else {
+                        showMicResult('good', '👍 ¡Bien! (' + Math.round(bestConfidence * 100) + '%) — sigue practicando');
+                    }
+                    card.classList.add('flipped');
+                } else if (bestPartial >= 0.5) {
+                    // Al menos la mitad de los caracteres coinciden
+                    showMicResult('good', '👍 ¡Casi! Se entendió: "' + topTranscript + '" — sigue practicando');
+                    card.classList.add('flipped');
+                } else {
+                    showMicResult('incorrect', '❌ Se entendió: "' + topTranscript + '"  |  Esperado: ' + item.h);
+                }
+            };
+
+            rec.onerror = function(event) {
+                setListening(false);
+                if (event.error === 'no-speech') {
+                    showMicResult('incorrect', '🔇 No se detectó voz. Inténtalo de nuevo.');
+                } else if (event.error === 'not-allowed') {
+                    showMicResult('incorrect', '🚫 Permiso de micrófono denegado.');
+                } else {
+                    showMicResult('incorrect', '❌ Error al escuchar. Inténtalo de nuevo.');
+                }
+            };
+
+            rec.onend = function() {
+                if (isListening) setListening(false);
+            };
+        });
+
+        render();
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw-verbos.js');
+        }
+    </script>
+</body>
+</html>
